@@ -15,27 +15,26 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@CrossOrigin("*")
 @RequiredArgsConstructor
 public class TicketController {
 
     private final TicketServices ticketServices;
 
     @PostMapping(path = "/tickets")
-    @PreAuthorize("hasRole('ADMIN')")
-    @SecurityRequirement(name = "Bearer Authentication")
+    //@PreAuthorize("hasRole('ADMIN')")
+    //@SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketsDto) throws TicketAlreadyExistException {
         return new ResponseEntity<>(ticketServices.addTicket(ticketsDto), HttpStatus.CREATED);
     }
 
     @GetMapping(path = "/tickets")
-    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<List<TicketDto>> getAllTickets(){
         return new ResponseEntity<>(ticketServices.getAllTickets(), HttpStatus.OK);
     }
 
     @GetMapping(path = "/ticket/{id}")
-    @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<TicketDto> getTickeById(@PathVariable Long id) throws TicketNotFoundException {
+    public ResponseEntity<TicketDto> getTicketById(@PathVariable Long id) throws TicketNotFoundException {
         return new ResponseEntity<>(ticketServices.getTicket(id), HttpStatus.OK);
     }
 

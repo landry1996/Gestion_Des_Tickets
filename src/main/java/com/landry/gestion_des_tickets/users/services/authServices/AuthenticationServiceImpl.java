@@ -9,12 +9,15 @@ import com.landry.gestion_des_tickets.tickets.mapper.TicketMapper;
 import com.landry.gestion_des_tickets.users.configs.JwtService;
 import com.landry.gestion_des_tickets.users.dao.TokenRepository;
 import com.landry.gestion_des_tickets.users.dao.UsersRepository;
-import com.landry.gestion_des_tickets.users.dto.*;
+import com.landry.gestion_des_tickets.users.dto.AuthenticationRequest;
+import com.landry.gestion_des_tickets.users.dto.AuthenticationResponse;
+import com.landry.gestion_des_tickets.users.dto.RegisterRequest;
+import com.landry.gestion_des_tickets.users.dto.UserDto;
 import com.landry.gestion_des_tickets.users.enums.TokenType;
-import com.landry.gestion_des_tickets.users.error.PasswordException;
 import com.landry.gestion_des_tickets.users.mapper.UserMapper;
 import com.landry.gestion_des_tickets.users.models.Token;
 import com.landry.gestion_des_tickets.users.models.Usr;
+import com.landry.gestion_des_tickets.users.services.UserServices;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,18 +28,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
 import static com.landry.gestion_des_tickets.tickets.utils.*;
-import static com.landry.gestion_des_tickets.users.utils.PASSWORD_ARE_NOT_THE_SAME;
-import static com.landry.gestion_des_tickets.users.utils.WRONG_PASSWORD;
 
 @Service
 @RequiredArgsConstructor
-public class AuthenticationService{
+public class AuthenticationServiceImpl implements UserServices {
 
     private final UsersRepository usersRepository;
     private final TokenRepository tokenRepository;
@@ -73,6 +73,7 @@ public class AuthenticationService{
                 .refreshToken(refreshToken)
                 .build();
     }
+
     /**
      * enregistrement du token dans notre base de donnees
      *
@@ -125,7 +126,7 @@ public class AuthenticationService{
         refreshToken = authHeader.substring(7);
         userEmail = jwtService.extractUsername(refreshToken);
         if (userEmail != null) {
-            var user = this.usersRepository.findUsersByEmail(userEmail).orElseThrow();
+            var user = this.usersRepository.findUsrByEmail(userEmail).orElseThrow();
             if (jwtService.isTokenValid(refreshToken, user)) {
                 var accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
@@ -139,32 +140,6 @@ public class AuthenticationService{
         }
     }
 
-    public void changePassword(ChangePasswordRequest request, Principal connectedUser) throws PasswordException {
-
-        var user = (Usr) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-
-        /**
-         *  check if the current password is correct
-         */
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new PasswordException(WRONG_PASSWORD);
-        }
-        /**
-         * check if the two new passwords are the same
-         */
-        if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
-            throw new PasswordException(PASSWORD_ARE_NOT_THE_SAME);
-        }
-
-        /**
-         * update the password
-         */
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        /**
-         * save the new password
-         */
-        usersRepository.save(user);
-    }
 
     /**
      * Authentifier un nouvelle utilisateur dans notre base de donnees
@@ -174,7 +149,7 @@ public class AuthenticationService{
      */
     public AuthenticationResponse authenticate(AuthenticationRequest request) throws UserNotFoundException {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        var user = usersRepository.findUsersByEmail(request.getEmail())
+        var user = usersRepository.findUsrByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -188,18 +163,17 @@ public class AuthenticationService{
     }
 
 
-
-
+    @Override
     public List<UserDto> getAllUsers() {
         return usersRepository.findAll()
                 .stream().map(userMapper::mapUserToUserDto).toList();
     }
 
-
+    @Override
     public UserDto addUser(UserDto userDto) throws UserAlreadyExistException {
 
         if (Objects.nonNull(userDto) && Objects.nonNull(userDto.getUsername())
-                && usersRepository.findUsersByUsername(userDto.getUsername()).isPresent()) {
+                && usersRepository.findUsrByUsername(userDto.getUsername()).isPresent()) {
             throw new UserAlreadyExistException(USER_ALREADY_EXIST_IN_DATABASE);
 
         }
@@ -208,7 +182,7 @@ public class AuthenticationService{
         return userMapper.mapUserToUserDto(usr);
     }
 
-
+    @Override
     public UserDto updateUser(Long id, UserDto userDto) throws UserNotFoundException, UserErrorException {
 
         if (Objects.nonNull(id) && usersRepository.findById(id).isEmpty()) {
@@ -223,7 +197,7 @@ public class AuthenticationService{
 
     }
 
-
+    @Override
     public List<TicketDto> getTicketsByUserId(Long userId) throws UserNotFoundException {
 
         if (usersRepository.findById(userId).isEmpty()) {

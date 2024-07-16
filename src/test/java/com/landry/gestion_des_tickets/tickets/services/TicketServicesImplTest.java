@@ -10,9 +10,7 @@ import com.landry.gestion_des_tickets.tickets.mapper.TicketMapper;
 import com.landry.gestion_des_tickets.tickets.mapper.TicketMapperImpl;
 import com.landry.gestion_des_tickets.tickets.models.Ticket;
 import com.landry.gestion_des_tickets.users.dao.UsersRepository;
-import com.landry.gestion_des_tickets.users.dto.RegisterRequest;
-import com.landry.gestion_des_tickets.users.enums.Roles;
-import com.landry.gestion_des_tickets.users.services.authServices.AuthenticationService;
+import com.landry.gestion_des_tickets.users.services.authServices.AuthenticationServiceImpl;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,8 +29,6 @@ import java.util.Optional;
 
 import static com.landry.gestion_des_tickets.tickets.utils.TICKET_ALREADY_EXIST_IN_DATABASE;
 import static com.landry.gestion_des_tickets.tickets.utils.TICKET_NOT_EXIST;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,7 +43,7 @@ class TicketServicesImplTest {
     @InjectMocks
     private TicketServicesImpl services;
     @InjectMocks
-    private AuthenticationService authenticationService;
+    private AuthenticationServiceImpl authenticationServiceImpl;
 
     @Mock
     private TicketMapper ticketMapper;
