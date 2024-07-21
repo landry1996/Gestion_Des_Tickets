@@ -22,8 +22,6 @@ public class TicketController {
     private final TicketServices ticketServices;
 
     @PostMapping(path = "/tickets")
-    //@PreAuthorize("hasRole('ADMIN')")
-    //@SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<TicketDto> createTicket(@RequestBody TicketDto ticketsDto) throws TicketAlreadyExistException {
         return new ResponseEntity<>(ticketServices.addTicket(ticketsDto), HttpStatus.CREATED);
     }

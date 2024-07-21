@@ -27,13 +27,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static com.landry.gestion_des_tickets.tickets.utils.TICKET_ALREADY_EXIST_IN_DATABASE;
-import static com.landry.gestion_des_tickets.tickets.utils.TICKET_NOT_EXIST;
+import static com.landry.gestion_des_tickets.tickets.utils.*;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@ContextConfiguration(classes = {TicketServicesImpl.class, TicketMapperImpl.class,UsersRepository.class})
+@ContextConfiguration(classes = {TicketServicesImpl.class,AuthenticationServiceImpl.class, TicketMapperImpl.class,UsersRepository.class})
 class TicketServicesImplTest {
 
     @Mock
@@ -216,13 +215,27 @@ class TicketServicesImplTest {
     @Test
     public void testDeleteTicket_TicketNotFound() throws TicketNotFoundException {
         //Given
-        Long id = 1L;
+        Long id = 3L;
 
-        //When
         Mockito.when(ticketsRepository.findById(id)).thenReturn(Optional.empty());
 
         //Then
-        services.deleteTicket(id);
+        Assertions.assertThatThrownBy(()-> services.deleteTicket(id))
+                .isInstanceOf(TicketNotFoundException.class)
+                .hasMessage(TICKET_NOT_EXIST);
+    }
+
+    @Test
+    public void testToAssignTicketToUser(){
+
+        //Given
+
+        Long ticketId = 1L;
+        Long userId = 1L;
+        var ticket = getTicketById(ticketId);
+        var ticketDto = getTickeDtotById(ticketId);
+
+
     }
 
 
